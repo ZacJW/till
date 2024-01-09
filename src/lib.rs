@@ -1,6 +1,10 @@
 #![no_std]
 #![feature(waker_getters)]
 
+pub mod impls;
+
+// static CURRENT_EXECUTOR: AtomicPtr<()> = AtomicPtr::new(core::ptr::null_mut());
+
 struct BoundedEventSourceId(usize);
 
 use core::{
@@ -9,7 +13,7 @@ use core::{
 };
 
 use futures::future::FusedFuture;
-use impls::no_heap::SingleThreadMarshall;
+use impls::no_heap::{SingleThreadMarshall, StreamingIterator};
 
 pub const fn raw_waker_v_table<Marshall: ExecutorMarshall>() -> core::task::RawWakerVTable {
     unsafe fn clone<Marshall: ExecutorMarshall>(marshall: *const ()) -> core::task::RawWaker {
