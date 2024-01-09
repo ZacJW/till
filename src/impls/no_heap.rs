@@ -1,7 +1,7 @@
 use core::{cell::Cell, pin::Pin, task::RawWakerVTable};
 
 use crate::{
-    Context, EventSourcePool, ExecutorMarshall, FusedFutureWithWakeStatus, Source, TaskManager,
+    Context, EventSourcePool, Marshall, FusedFutureWithWakeStatus, Source, TaskManager,
 };
 
 struct AtomicPtrMarshall {
@@ -11,7 +11,7 @@ struct AtomicPtrMarshall {
 
 static ATOMIC_PTR_MARSHALL_VTABLE: RawWakerVTable = crate::raw_waker_v_table::<AtomicPtrMarshall>();
 
-impl ExecutorMarshall for AtomicPtrMarshall {
+impl Marshall for AtomicPtrMarshall {
     fn wake(&'static self) {
         todo!()
     }
@@ -64,7 +64,7 @@ impl SingleThreadMarshall {
     }
 }
 
-impl ExecutorMarshall for SingleThreadMarshall {
+impl Marshall for SingleThreadMarshall {
     fn wake(&'static self) {
         let ptr = self.ptr.get();
         if ptr.is_null() {
@@ -85,7 +85,7 @@ impl ExecutorMarshall for SingleThreadMarshall {
     }
 }
 
-pub struct ArrayTaskManager<'a, const N: usize, Marshall: ExecutorMarshall> {
+pub struct ArrayTaskManager<'a, const N: usize, Marshall: Marshall> {
     pub tasks: [(
         Pin<&'a mut dyn FusedFutureWithWakeStatus<Output = ()>>,
         &'static Marshall,
@@ -100,7 +100,7 @@ pub trait StreamingIterator {
     fn next<'n>(&'n mut self) -> Option<Self::Item<'n>>;
 }
 
-pub struct ArrayTaskManagerIter<'a, 'b: 'a, const N: usize, Marshall: ExecutorMarshall> {
+pub struct ArrayTaskManagerIter<'a, 'b: 'a, const N: usize, Marshall: Marshall> {
     array: &'a mut [(
         Pin<&'b mut dyn FusedFutureWithWakeStatus<Output = ()>>,
         &'static Marshall,
@@ -108,7 +108,7 @@ pub struct ArrayTaskManagerIter<'a, 'b: 'a, const N: usize, Marshall: ExecutorMa
     i: usize,
 }
 
-impl<'a, 'b: 'a, const N: usize, Marshall: ExecutorMarshall> StreamingIterator for ArrayTaskManagerIter<'a, 'b, N, Marshall> {
+impl<'a, 'b: 'a, const N: usize, Marshall: Marshall> StreamingIterator for ArrayTaskManagerIter<'a, 'b, N, Marshall> {
     type Item<'n> = (Pin<&'n mut dyn FusedFutureWithWakeStatus<Output = ()>>, &'static Marshall)
     where
         Self: 'n;
@@ -121,7 +121,7 @@ impl<'a, 'b: 'a, const N: usize, Marshall: ExecutorMarshall> StreamingIterator f
 }
 
 
-impl<'a, 'b, const N: usize, Marshall: ExecutorMarshall> Iterator
+impl<'a, 'b, const N: usize, Marshall: Marshall> Iterator
     for ArrayTaskManagerIter<'a, 'b, N, Marshall>
 {
     type Item = (
@@ -142,7 +142,7 @@ impl<'a, 'b, const N: usize, Marshall: ExecutorMarshall> Iterator
     }
 }
 
-impl<'a, const N: usize, Marshall: ExecutorMarshall> TaskManager
+impl<'a, const N: usize, Marshall: Marshall> TaskManager
     for ArrayTaskManager<'a, N, Marshall>
 {
     type Marshall = Marshall;
@@ -212,7 +212,7 @@ impl EventSourcePool for DummyPool {
 mod test {
     use core::cell::Cell;
 
-    use crate::ExecutorMarshall;
+    use crate::Marshall;
 
     use super::SingleThreadMarshall;
 
