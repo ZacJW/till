@@ -4,6 +4,8 @@ use crate::{
     Context, EventSourcePool, Marshall, FusedFutureWithWakeStatus, Source, TaskManager,
 };
 
+pub mod event_source_pool;
+
 struct AtomicPtrMarshall {
     lock: core::sync::atomic::AtomicBool,
     ptr: core::sync::atomic::AtomicPtr<core::sync::atomic::AtomicBool>,
@@ -85,7 +87,7 @@ impl Marshall for SingleThreadMarshall {
     }
 }
 
-pub struct ArrayTaskManager<'a, const N: usize, Marshall: Marshall> {
+pub struct ArrayTaskManager<'a, const N: usize, Marshall: crate::Marshall> {
     pub tasks: [(
         Pin<&'a mut dyn FusedFutureWithWakeStatus<Output = ()>>,
         &'static Marshall,
@@ -100,7 +102,7 @@ pub trait StreamingIterator {
     fn next<'n>(&'n mut self) -> Option<Self::Item<'n>>;
 }
 
-pub struct ArrayTaskManagerIter<'a, 'b: 'a, const N: usize, Marshall: Marshall> {
+pub struct ArrayTaskManagerIter<'a, 'b: 'a, const N: usize, Marshall: crate::Marshall> {
     array: &'a mut [(
         Pin<&'b mut dyn FusedFutureWithWakeStatus<Output = ()>>,
         &'static Marshall,
@@ -108,7 +110,7 @@ pub struct ArrayTaskManagerIter<'a, 'b: 'a, const N: usize, Marshall: Marshall> 
     i: usize,
 }
 
-impl<'a, 'b: 'a, const N: usize, Marshall: Marshall> StreamingIterator for ArrayTaskManagerIter<'a, 'b, N, Marshall> {
+impl<'a, 'b: 'a, const N: usize, Marshall: crate::Marshall> StreamingIterator for ArrayTaskManagerIter<'a, 'b, N, Marshall> {
     type Item<'n> = (Pin<&'n mut dyn FusedFutureWithWakeStatus<Output = ()>>, &'static Marshall)
     where
         Self: 'n;
@@ -121,7 +123,7 @@ impl<'a, 'b: 'a, const N: usize, Marshall: Marshall> StreamingIterator for Array
 }
 
 
-impl<'a, 'b, const N: usize, Marshall: Marshall> Iterator
+impl<'a, 'b, const N: usize, Marshall: crate::Marshall> Iterator
     for ArrayTaskManagerIter<'a, 'b, N, Marshall>
 {
     type Item = (
@@ -142,7 +144,7 @@ impl<'a, 'b, const N: usize, Marshall: Marshall> Iterator
     }
 }
 
-impl<'a, const N: usize, Marshall: Marshall> TaskManager
+impl<'a, const N: usize, Marshall: crate::Marshall> TaskManager
     for ArrayTaskManager<'a, N, Marshall>
 {
     type Marshall = Marshall;

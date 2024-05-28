@@ -1,0 +1,10 @@
+[package]
+name = "till"
+version = "0.0.1"
+edition = "2021"
+description = "An async executor for embedded systems"
+license = "MIT"
+
+[dependencies]
+futures = { version = "0.3.29", default-features = false }
+pin-project = "1.1.3"

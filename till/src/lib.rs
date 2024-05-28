@@ -15,23 +15,23 @@ use core::{
 use futures::future::FusedFuture;
 use impls::no_heap::{SingleThreadMarshall, StreamingIterator};
 
-pub const fn raw_waker_v_table<MarshallType: MarshallType>() -> core::task::RawWakerVTable {
-    unsafe fn clone<Marshall: Marshall>(marshall: *const ()) -> core::task::RawWaker {
-        let waker = MarshallType::waker(&*(marshall as *const Marshall));
+pub const fn raw_waker_v_table<MarshallType: Marshall>() -> core::task::RawWakerVTable {
+    unsafe fn clone<Marshall: self::Marshall>(marshall: *const ()) -> core::task::RawWaker {
+        let waker = Marshall::waker(&*(marshall as *const Marshall));
         let raw = waker.as_raw();
         let raw = core::task::RawWaker::new(raw.data(), raw.vtable());
         core::mem::forget(waker);
         raw
     }
-    unsafe fn wake<Marshall: Marshall>(marshall: *const ()) {
+    unsafe fn wake<Marshall: self::Marshall>(marshall: *const ()) {
         // Nothing is owned or needs to be cleaned up so this is just wake_by_ref
         wake_by_ref::<Marshall>(marshall)
     }
-    unsafe fn wake_by_ref<Marshall: Marshall>(marshall: *const ()) {
+    unsafe fn wake_by_ref<Marshall: self::Marshall>(marshall: *const ()) {
         let marshall = &*(marshall as *const Marshall);
         marshall.wake();
     }
-    unsafe fn drop<Marshall: Marshall>(_marshall: *const ()) {
+    unsafe fn drop<Marshall: self::Marshall>(_marshall: *const ()) {
         // The marshall has static lifetime so no cleanup required
     }
     core::task::RawWakerVTable::new(
