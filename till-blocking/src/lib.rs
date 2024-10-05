@@ -13,11 +13,11 @@ use maybe_send::Satisfies;
 
 /// Executor support for spawning blocking functions on a thread that won't block async tasks
 /// from making progress.
-pub trait Blocking<SendBound: maybe_send::SendBound> {
+pub trait BlockingExplicit<SendBound: maybe_send::SendBound> {
     type Node<T: Satisfies<SendBound> + 'static>: BlockingNode<Output = Result<T, Self::Error>>;
     type Error;
 
-    fn spawn_blocking<
+    fn spawn_blocking_explicit<
         T: Satisfies<SendBound> + 'static,
         F: FnOnce() -> T + Satisfies<SendBound> + 'static,
     >(
@@ -49,17 +49,17 @@ pub trait BlockingNode: Future {
     fn new_empty() -> Self;
 }
 
-pub async fn spawn_blocking<
+pub async fn spawn_blocking_explicit<
     SendBound: maybe_send::SendBound,
     T: Satisfies<SendBound> + 'static,
     F: FnOnce() -> T + Satisfies<SendBound> + 'static,
-    B: Blocking<SendBound>,
+    B: BlockingExplicit<SendBound>,
 >(
     blocking: &B,
     f: F,
-) -> Result<T, <B as Blocking<SendBound>>::Error> {
+) -> Result<T, <B as BlockingExplicit<SendBound>>::Error> {
     let mut node = pin!(B::Node::<T>::new_empty());
-    blocking.spawn_blocking(node.as_mut(), f);
+    blocking.spawn_blocking_explicit(node.as_mut(), f);
     node.await
 }
 
@@ -80,10 +80,10 @@ pub async fn spawn_blocking_implicit<
 /// from making progress.
 ///
 /// Unlike [Blocking], this trait allow functions to be spawned in an eager way (i.e. before the first await of the join handle)
-pub trait EagerBlocking<SendBound: maybe_send::SendBound> {
+pub trait EagerBlockingExplicit<SendBound: maybe_send::SendBound> {
     type Handle<T>: EagerBlockingHandle<Return = T>;
 
-    fn spawn_eager_blocking<
+    fn spawn_eager_blocking_explicit<
         T: Satisfies<SendBound> + 'static,
         F: FnOnce() -> T + Satisfies<SendBound> + 'static,
     >(
