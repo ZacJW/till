@@ -7,8 +7,8 @@ use core::{
     pin::{pin, Pin},
 };
 
-use till::{ExplicitContext, ImplicitContext};
 use maybe_send::Satisfies;
+use till::{ExplicitContext, ImplicitContext};
 
 /// Executor support for spawning blocking functions on a thread that won't block async tasks
 /// from making progress.
@@ -62,11 +62,7 @@ pub async fn spawn_blocking_implicit<
 /// from making progress.
 ///
 /// Unlike [Blocking], this trait allow functions to be spawned in an eager way (i.e. before the first await of the join handle)
-pub trait EagerBlocking<
-    SendBound: maybe_send::SendBound,
-    Context: till::Context<Self>,
->
-{
+pub trait EagerBlocking<SendBound: maybe_send::SendBound, Context: till::Context<Self>> {
     type Handle<T>: EagerBlockingHandle<Return = T>;
 
     fn spawn_eager_blocking<
@@ -78,6 +74,7 @@ pub trait EagerBlocking<
     ) -> Self::Handle<T>;
 }
 
-pub trait EagerBlockingHandle {
+pub trait EagerBlockingHandle: Future<Output = Result<Self::Return, Self::Error>> {
     type Return;
+    type Error;
 }
