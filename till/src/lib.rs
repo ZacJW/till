@@ -2,26 +2,26 @@
 
 use core::marker::PhantomData;
 
-pub trait MaybeExplicit<Context: ?Sized> {}
+pub trait Context<Executor: ?Sized> {}
 
 #[derive(Clone, Copy)]
-pub struct ExplicitContext<'a, Context>(pub &'a Context);
+pub struct ExplicitContext<'a, Executor>(pub &'a Executor);
 
-impl<'a, Context> From<&'a Context> for ExplicitContext<'a, Context> {
-    fn from(value: &'a Context) -> Self {
+impl<'a, Executor> From<&'a Executor> for ExplicitContext<'a, Executor> {
+    fn from(value: &'a Executor) -> Self {
         Self(value)
     }
 }
 
 #[derive(Clone, Copy)]
-pub struct ImplicitContext<Context>(PhantomData<*const Context>);
+pub struct ImplicitContext<Executor>(PhantomData<*const Executor>);
 
-impl<Context> Default for ImplicitContext<Context> {
+impl<Executor> Default for ImplicitContext<Executor> {
     fn default() -> Self {
         Self(Default::default())
     }
 }
 
-impl<'a, Context> MaybeExplicit<Context> for ExplicitContext<'a, Context> {}
+impl<'a, Executor> Context<Executor> for ExplicitContext<'a, Executor> {}
 
-impl<Context> MaybeExplicit<Context> for ImplicitContext<Context> {}
+impl<Executor> Context<Executor> for ImplicitContext<Executor> {}

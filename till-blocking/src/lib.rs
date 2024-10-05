@@ -12,7 +12,7 @@ use maybe_send::Satisfies;
 
 /// Executor support for spawning blocking functions on a thread that won't block async tasks
 /// from making progress.
-pub trait Blocking<SendBound: maybe_send::SendBound, Context: till::MaybeExplicit<Self>> {
+pub trait Blocking<SendBound: maybe_send::SendBound, Context: till::Context<Self>> {
     type Node<T: Satisfies<SendBound> + 'static>: BlockingNode<Output = Result<T, Self::Error>>;
     type Error;
 
@@ -64,7 +64,7 @@ pub async fn spawn_blocking_implicit<
 /// Unlike [Blocking], this trait allow functions to be spawned in an eager way (i.e. before the first await of the join handle)
 pub trait EagerBlocking<
     SendBound: maybe_send::SendBound,
-    Context: till::MaybeExplicit<Self>,
+    Context: till::Context<Self>,
 >
 {
     type Handle<T>: EagerBlockingHandle<Return = T>;
