@@ -1,8 +1,16 @@
 use core::ops::{Deref, DerefMut};
 
+/// `T: Satisfies<MustBeSend>` if, and only if, `T: Send`
+/// 
+/// For use with the [Satisfies] trait, which enables being generic over the presence of a trait bound
 pub struct MustBeSend;
+
+/// `T: Satisfies<MaybeNotSend>` for all `T`
+/// 
+/// For use with the [Satisfies] trait, which enables being generic over the presence of a trait bound
 pub struct MaybeNotSend;
 
+/// Either [MustBeSend] or [MaybeNotSend]
 pub trait SendBound: private::Sealed {}
 
 impl SendBound for MustBeSend {}
@@ -17,8 +25,7 @@ mod private {
     pub trait SealedWith<Bound> {}
 }
 
-// pub trait Holds {}
-
+/// This trait facilitates being generic over the presence of a trait bound
 pub trait Satisfies<Bound>: private::SealedWith<Bound> {}
 
 impl<T: ?Sized> Satisfies<MaybeNotSend> for T {}
@@ -26,12 +33,6 @@ impl<T: ?Sized> private::SealedWith<MaybeNotSend> for T {}
 
 impl<T: Send + ?Sized> Satisfies<MustBeSend> for T {}
 impl<T: Send + ?Sized> private::SealedWith<MustBeSend> for T {}
-
-// pub struct Assert<T: ?Sized, Bound>(PhantomData<*const (Bound, T)>);
-
-// impl<T: ?Sized> Holds for Assert<T, MaybeNotSend> {}
-
-// impl<T: Send + ?Sized> Holds for Assert<T, MustBeSend> {}
 
 pub trait EagerBlockingHandle {
     type Return;
