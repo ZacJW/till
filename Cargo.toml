@@ -3,6 +3,7 @@
 resolver = "2"
 
 members = [
+    "till",
     "till-modular",
     "till-blocking",
 ]
